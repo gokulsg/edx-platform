@@ -12,7 +12,6 @@ import logging
 
 from pkg_resources import resource_string
 
-from django.conf import settings
 from web_fragments.fragment import Fragment
 from xblock.core import XBlock
 from xblock.fields import Boolean, Dict, Integer, List, Scope, String
@@ -33,19 +32,6 @@ log = logging.getLogger(__name__)
 # Make '_' a no-op so we can scrape strings. Using lambda instead of
 #  `django.utils.translation.ugettext_noop` because Django cannot be imported in this file
 _ = lambda text: text
-
-
-ENABLE_WORD_CLOUD_MOBILE_SUPPORT = 'ENABLE_WORD_CLOUD_MOBILE_SUPPORT'
-
-
-def toggle_mobile_support(view):
-    """
-    Add mobile support if the feature flag is enabled.
-    """
-    if getattr(settings, 'FEATURES', {}).get(ENABLE_WORD_CLOUD_MOBILE_SUPPORT, False):
-        return XBlock.supports('multi_device')(view)
-    else:
-        return view
 
 
 def pretty_bool(value):
@@ -287,7 +273,7 @@ class WordCloudBlock(  # pylint: disable=abstract-method
                 'error': 'Unknown Command!'
             })
 
-    @toggle_mobile_support
+    @XBlock.supports('multi_device')
     def student_view(self, context):  # lint-amnesty, pylint: disable=unused-argument
         """
         Renders the output that a student will see.

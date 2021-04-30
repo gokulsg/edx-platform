@@ -4,14 +4,13 @@ import json
 from unittest import mock
 
 from django.test import TestCase
-from django.test.utils import override_settings
 from fs.memoryfs import MemoryFS
 from lxml import etree
 from opaque_keys.edx.locator import BlockUsageLocator, CourseLocator
 from webob.multidict import MultiDict
 from xblock.field_data import DictFieldData
 
-from xmodule.word_cloud_module import WordCloudBlock, toggle_mobile_support
+from xmodule.word_cloud_module import WordCloudBlock
 from . import get_test_descriptor_system, get_test_system
 
 
@@ -116,27 +115,3 @@ class WordCloudBlockTest(TestCase):
                {'content_type': 'Word Cloud',
                 'content': {'display_name': 'Word Cloud Block',
                             'instructions': 'Enter some random words that comes to your mind'}}
-
-    @mock.patch('xblock.core.XBlock.supports')
-    def test_mobile_supports_enabled(self, xblock_supports_mock):
-        """
-        Make sure that answer for incorrect request is error json.
-        """
-        with override_settings(FEATURES=dict(ENABLE_WORD_CLOUD_MOBILE_SUPPORT=True)):
-            xblock_decorator = mock.Mock()
-            xblock_supports_mock.return_value = xblock_decorator
-            some_function = mock.Mock()
-            toggle_mobile_support(some_function)
-
-            xblock_supports_mock.assert_called_once_with('multi_device')
-            xblock_decorator.assert_called_once_with(some_function)
-
-    @mock.patch('xblock.core.XBlock.supports')
-    def test_mobile_supports_disabled(self, xblock_supports_mock):
-        """
-        Make sure that answer for incorrect request is error json.
-        """
-        some_function = mock.Mock()
-        toggle_mobile_support(some_function)
-
-        xblock_supports_mock.assert_not_called()
