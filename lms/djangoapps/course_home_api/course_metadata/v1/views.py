@@ -82,12 +82,6 @@ class CourseHomeMetadataView(RetrieveAPIView):
         username = request.user.username if request.user.username else None
         course = course_detail(request, request.user.username, course_key)
         user_is_enrolled = CourseEnrollment.is_enrolled(request.user, course_key_string)
-        browser_timezone = request.query_params.get('browser_timezone', None)
-        celebrations = {
-            'streak_length_to_celebrate': UserCelebration.perform_streak_updates(
-                request.user, course_key, browser_timezone
-            )
-        }
 
         courseware_meta = CoursewareMeta(course_key, request, request.user.username)
         can_load_courseware = courseware_meta.is_microfrontend_enabled_for_user()
@@ -104,7 +98,8 @@ class CourseHomeMetadataView(RetrieveAPIView):
             'is_self_paced': getattr(course, 'self_paced', False),
             'is_enrolled': user_is_enrolled,
             'can_load_courseware': can_load_courseware,
-            'celebrations': celebrations,
+            'celebrations': courseware_meta.celebrations,
+            'verified_mode': courseware_meta.verified_mode,
         }
         context = self.get_serializer_context()
         context['course'] = course

@@ -82,6 +82,30 @@ def get_discount_expiration_date(user, course):
     return discount_expiration_date
 
 
+def AA759_can_show_coupon(user, course):
+    """
+    Check whether this combination of user and course
+    can receive the AA-759 experiment discount.
+    """
+    # Course end date needs to be in the future
+    if course.has_ended():
+        return False
+
+    # Course needs to have a non-expired verified mode
+    modes_dict = CourseMode.modes_for_course_dict(course=course, include_expired=False)
+    verified_mode = modes_dict.get('verified', None)
+    if not verified_mode:
+        return False
+
+    # We can't import this at Django load time within the openedx tests settings context
+    from openedx.features.enterprise_support.utils import is_enterprise_learner
+    # Don't give discount to enterprise users
+    if is_enterprise_learner(user):
+        return False
+
+    return True
+
+
 def can_receive_discount(user, course, discount_expiration_date=None):
     """
     Check all the business logic about whether this combination of user and course

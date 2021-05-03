@@ -43,3 +43,4 @@ class CourseHomeMetadataSerializer(serializers.Serializer):
     title = serializers.CharField()
     can_load_courseware = serializers.BooleanField()
     celebrations = serializers.DictField()
+    verified_mode = serializers.DictField()

@@ -10,6 +10,7 @@ from django.urls import reverse
 from django.utils.translation import ugettext as _
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
 from edx_rest_framework_extensions.auth.session.authentication import SessionAuthenticationAllowInactiveUser
+from edx_toggles.toggles import LegacyWaffleFlagNamespace
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey, UsageKey
 from rest_framework.exceptions import NotFound
@@ -21,6 +22,7 @@ from rest_framework.views import APIView
 from common.djangoapps.course_modes.models import CourseMode
 from common.djangoapps.util.views import expose_header
 from lms.djangoapps.edxnotes.helpers import is_feature_enabled
+from lms.djangoapps.experiments.flags import ExperimentWaffleFlag
 from lms.djangoapps.certificates.api import get_certificate_url
 from lms.djangoapps.certificates.models import GeneratedCertificate
 from lms.djangoapps.course_api.api import course_detail
@@ -44,6 +46,7 @@ from openedx.core.djangoapps.programs.utils import ProgramProgressMeter
 from openedx.features.course_experience import DISPLAY_COURSE_SOCK_FLAG
 from openedx.features.content_type_gating.models import ContentTypeGatingConfig
 from openedx.features.course_duration_limits.access import get_access_expiration_data
+from openedx.features.discounts.applicability import AA759_can_show_coupon
 from openedx.features.discounts.utils import generate_offer_data
 from common.djangoapps.student.models import (
     CourseEnrollment,
@@ -84,6 +87,7 @@ class CoursewareMeta:
         self.original_user_is_staff = has_access(self.request.user, 'staff', self.overview).has_access
         self.original_user_is_global_staff = self.request.user.is_staff
         self.course_key = course_key
+        self.course = get_course_by_id(self.course_key)
         self.course_masquerade, self.effective_user = setup_masquerade(
             self.request,
             course_key,
@@ -198,12 +202,37 @@ class CoursewareMeta:
         Returns a list of celebrations that should be performed.
         """
         browser_timezone = self.request.query_params.get('browser_timezone', None)
-        return {
+        streak_length_to_celebrate = UserCelebration.perform_streak_updates(
+            self.effective_user, self.course_key, browser_timezone
+        )
+        celebrations = {
             'first_section': CourseEnrollmentCelebration.should_celebrate_first_section(self.enrollment_object),
-            'streak_length_to_celebrate': UserCelebration.perform_streak_updates(
-                self.effective_user, self.course_key, browser_timezone
-            ),
+            'streak_length_to_celebrate': streak_length_to_celebrate,
+            'streak_discount_experiment_enabled': False,
         }
+
+        # We only want to bucket people into the AA-759 experiment if they are going to see the streak celebration
+        if streak_length_to_celebrate:
+            # We only want to bucket people into the AA-759 experiment
+            # if the course has not ended, is upgradeable and the user is not an enterprise learner
+            if AA759_can_show_coupon(self.effective_user, self.course):
+                # .. toggle_name: streak_celebration.AA-759
+                # .. toggle_implementation: ExperimentWaffleFlag
+                # .. toggle_default: False
+                # .. toggle_description: This experiment flag enables an engagement discount incentive message.
+                # .. toggle_warnings: This flag depends on the streak celebration feature being enabled
+                # .. toggle_use_cases: temporary
+                # .. toggle_creation_date: 2021-05-05
+                # .. toggle_target_removal_date: 2021-07-05
+                # .. toggle_tickets: https://openedx.atlassian.net/browse/AA-759
+                AA759_FLAG = ExperimentWaffleFlag(
+                    LegacyWaffleFlagNamespace(name='streak_celebration'),
+                    'AA-759',
+                    __name__,
+                    use_course_aware_bucketing=False
+                )
+                celebrations['streak_discount_experiment_enabled'] = AA759_FLAG.is_enabled()
+        return celebrations
 
     @property
     def user_has_passing_grade(self):
