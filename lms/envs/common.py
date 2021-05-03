@@ -829,18 +829,6 @@ FEATURES = {
     # Set to enable Enterprise integration
     'ENABLE_ENTERPRISE_INTEGRATION': False,
 
-    # .. toggle_name: FEATURES['ENABLE_WORD_CLOUD_MOBILE_SUPPORT']
-    # .. toggle_implementation: DjangoSetting
-    # .. toggle_default: False
-    # .. toggle_description: Whether word cloud supports mobile devices or not.
-    # .. toggle_warnings: Because the Course Blocks API caches its data, the cache must be cleared (e.g. by
-    #   re-publishing the course) for changes to this flag to take effect.
-    # .. toggle_use_cases: open_edx
-    # .. toggle_creation_date: 2021-04-21
-    # .. toggle_target_removal_date: None
-    # .. toggle_tickets: https://openedx.atlassian.net/browse/LEARNER-8319
-    'ENABLE_WORD_CLOUD_MOBILE_SUPPORT': False,
-
     # .. toggle_name: FEATURES['ENABLE_HTML_XBLOCK_STUDENT_VIEW_DATA']
     # .. toggle_implementation: DjangoSetting
     # .. toggle_default: False

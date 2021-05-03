@@ -1,7 +1,7 @@
 """Test for Word cloud Xmodule functional logic."""
 
 import json
-from unittest import mock
+from unittest.mock import Mock
 
 from django.test import TestCase
 from fs.memoryfs import MemoryFS
@@ -41,7 +41,7 @@ class WordCloudBlockTest(TestCase):
         )
 
         olx_element = etree.fromstring(original_xml)
-        id_generator = mock.Mock()
+        id_generator = Mock()
         block = WordCloudBlock.parse_xml(olx_element, runtime, None, id_generator)
         block.location = BlockUsageLocator(
             CourseLocator('org', 'course', 'run', branch='revision'), 'word_cloud', 'block_id'
@@ -67,7 +67,7 @@ class WordCloudBlockTest(TestCase):
         """
 
         module_system = get_test_system()
-        block = WordCloudBlock(module_system, DictFieldData(self.raw_field_data), mock.Mock())
+        block = WordCloudBlock(module_system, DictFieldData(self.raw_field_data), Mock())
 
         response = json.loads(block.handle_ajax('bad_dispatch', {}))
         self.assertDictEqual(response, {
@@ -81,7 +81,7 @@ class WordCloudBlockTest(TestCase):
         """
 
         module_system = get_test_system()
-        block = WordCloudBlock(module_system, DictFieldData(self.raw_field_data), mock.Mock())
+        block = WordCloudBlock(module_system, DictFieldData(self.raw_field_data), Mock())
 
         post_data = MultiDict(('student_words[]', word) for word in ['cat', 'cat', 'dog', 'sun'])
         response = json.loads(block.handle_ajax('submit', post_data))
@@ -110,7 +110,7 @@ class WordCloudBlockTest(TestCase):
         """
 
         module_system = get_test_system()
-        block = WordCloudBlock(module_system, DictFieldData(self.raw_field_data), mock.Mock())
+        block = WordCloudBlock(module_system, DictFieldData(self.raw_field_data), Mock())
         assert block.index_dictionary() ==\
                {'content_type': 'Word Cloud',
                 'content': {'display_name': 'Word Cloud Block',
