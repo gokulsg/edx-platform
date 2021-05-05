@@ -33,4 +33,6 @@ jobs:
         pip install -r requirements/edx/development.txt
 
     - name: Run Tests
+      env:
+        STUDIO_CFG: lms/envs/bok_choy.yml
       run: pytest -c /dev/null --collect-only cms/
