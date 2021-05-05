@@ -1,0 +1,36 @@
+name: Ensure Tests Running
+
+on:
+  pull_request:
+    branches:
+    - '**'
+
+jobs:
+  run_tests:
+    name: tests
+    runs-on: [ubuntu-20.04]
+    strategy:
+      matrix:
+        python-version: ['3.8']
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: setup python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install Packages
+      run: |
+        sudo apt-get update && sudo apt-get install libxmlsec1-dev
+
+    - name: Install pip
+      run: pip install -r requirements/edx/pip-tools.txt
+
+    - name: Install Dependencies
+      run: |
+        pip install setuptools wheel
+        pip install -r requirements/edx/development.txt
+
+    - name: Run Tests
+      run: pytest -c /dev/null --collect-only cms/
