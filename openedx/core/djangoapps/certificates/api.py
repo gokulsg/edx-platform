@@ -7,7 +7,8 @@ import logging
 from datetime import datetime
 from pytz import UTC
 
-from lms.djangoapps.certificates.models import CertificateStatuses, CertificateWhitelist
+from lms.djangoapps.certificates.api import is_on_allowlist
+from lms.djangoapps.certificates.models import CertificateStatuses
 from openedx.core.djangoapps.certificates.config import waffle
 from common.djangoapps.student.models import CourseEnrollment
 
@@ -57,8 +58,11 @@ def is_certificate_valid(certificate):
     return CourseEnrollment.is_enrolled_as_verified(certificate.user, certificate.course_id) and certificate.is_valid()
 
 
-def can_show_certificate_message(course, student, course_grade, certificates_enabled_for_course):  # lint-amnesty, pylint: disable=missing-function-docstring
-    is_whitelisted = CertificateWhitelist.objects.filter(user=student, course_id=course.id, whitelist=True).exists()
+def can_show_certificate_message(course, student, course_grade, certificates_enabled_for_course):
+    """
+    Returns True if a course certificate message can be shown
+    """
+    is_allowlisted = is_on_allowlist(student, course.id)
     auto_cert_gen_enabled = auto_certificate_generation_enabled()
     has_active_enrollment = CourseEnrollment.is_enrolled(student, course.id)
     certificates_are_viewable = certificates_viewable_for_course(course)
@@ -67,7 +71,7 @@ def can_show_certificate_message(course, student, course_grade, certificates_ena
         (auto_cert_gen_enabled or certificates_enabled_for_course) and
         has_active_enrollment and
         certificates_are_viewable and
-        (course_grade.passed or is_whitelisted)
+        (course_grade.passed or is_allowlisted)
     )
 
 
