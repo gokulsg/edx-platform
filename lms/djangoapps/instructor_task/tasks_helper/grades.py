@@ -358,8 +358,9 @@ class _ProblemGradeReportContext:
 
 class _CertificateBulkContext:
     def __init__(self, context, users):
-        certificate_whitelist = CertificateWhitelist.objects.filter(course_id=context.course_id, whitelist=True)
-        self.whitelisted_user_ids = [entry.user_id for entry in certificate_whitelist]
+#        certificate_whitelist = CertificateWhitelist.objects.filter(course_id=context.course_id, whitelist=True)
+#        self.whitelisted_user_ids = [entry.user_id for entry in certificate_whitelist]
+        self.whitelisted_user_ids = []
         self.certificates_by_user = {
             certificate.user.id: certificate
             for certificate in
